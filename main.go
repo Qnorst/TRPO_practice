@@ -11,6 +11,7 @@ import (
 	"github.com/wcharczuk/go-chart"
 )
 
+
 type CalculationRequest struct {
 	Num1   float64 `json:"num1"`
 	Num2   float64 `json:"num2"`
@@ -46,6 +47,13 @@ func divide(num1, num2 float64) (float64, error) {
 		return 0, errors.New("division by zero")
 	}
 	return num1 / num2, nil
+}
+
+func modulus(num1, num2 float64) (float64, error) {
+	if num2 == 0 {
+		return 0, errors.New("division by zero")
+	}
+	return math.Mod(num1, num2), nil
 }
 
 func convertToDecimal(num string, system string) (float64, error) {
@@ -159,6 +167,13 @@ func calculate(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			res.Result = strconv.FormatFloat(result, 'f', -1, 64)
+		case "/modulus": // Добавлен новый случай для подсчета остатка от деления
+			result, err := modulus(req.Num1, req.Num2)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			res.Result = strconv.FormatFloat(result, 'f', -1, 64)	
 		default:
 			http.NotFound(w, r)
 			return
@@ -190,11 +205,16 @@ func calculate(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+		case "/modulus": // Добавлен новый случай для подсчета остатка от деления
+			result, err = modulus(num1, num2)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		default:
 			http.NotFound(w, r)
 			return
 		}
-
 		res.Result = convertFromDecimal(result, system)
 	default:
 		http.Error(w, "invalid system", http.StatusBadRequest)
@@ -272,6 +292,8 @@ func main() {
 	http.HandleFunc("/subtract", calculate)
 	http.HandleFunc("/multiply", calculate)
 	http.HandleFunc("/divide", calculate)
+	
+	http.HandleFunc("/modulus", calculate)
 	http.HandleFunc("/chart", drawChart)
 
 	fmt.Println("Listening on port 8080...")

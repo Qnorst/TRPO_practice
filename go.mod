@@ -1,4 +1,4 @@
-module Calculator
+module CalculatorAPI
 
 go 1.20
 
